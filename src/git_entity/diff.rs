@@ -2,26 +2,19 @@ use crate::error::LumenError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum GitDiffError {
+pub enum DiffError {
     #[error("diff{} is empty", if *staged { " (staged)" } else { "" })]
     EmptyDiff { staged: bool },
 }
 
 #[derive(Clone, Debug)]
-pub struct GitDiff {
+pub struct Diff {
     pub staged: bool,
     pub diff: String,
 }
 
-impl GitDiff {
-    pub fn new(staged: bool) -> Result<Self, LumenError> {
-        Ok(GitDiff {
-            staged,
-            diff: Self::get_diff(staged)?,
-        })
-    }
-
-    fn get_diff(staged: bool) -> Result<String, LumenError> {
+impl Diff {
+    pub fn from_working_tree(staged: bool) -> Result<Self, LumenError> {
         let args = if staged {
             vec!["diff", "--staged"]
         } else {
@@ -32,9 +25,9 @@ impl GitDiff {
 
         let diff = String::from_utf8(output.stdout)?;
         if diff.is_empty() {
-            return Err(GitDiffError::EmptyDiff { staged }.into());
+            return Err(DiffError::EmptyDiff { staged }.into());
         }
 
-        Ok(diff)
+        Ok(Diff { staged, diff })
     }
 }

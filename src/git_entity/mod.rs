@@ -1,40 +1,41 @@
-use git_commit::GitCommit;
-use git_diff::GitDiff;
+use commit::Commit;
+use diff::Diff;
+use indoc::formatdoc;
 
-pub mod git_commit;
-pub mod git_diff;
+pub mod commit;
+pub mod diff;
 
 #[derive(Debug, Clone)]
 pub enum GitEntity {
-    Commit(GitCommit),
-    Diff(GitDiff),
+    Commit(Commit),
+    Diff(Diff),
 }
 
 impl GitEntity {
     pub fn format_static_details(&self) -> String {
         match self {
-            GitEntity::Commit(commit) => format!(
-                "{}\n`commit {}` | {} <{}> | {}\n\n{}\n-----\n",
-                "# Entity: Commit",
-                commit.full_hash,
-                commit.author_name,
-                commit.author_email,
-                commit.date,
-                commit.message,
-            ),
-            GitEntity::Diff(diff) => {
-                format!(
-                    "{}{}\n",
-                    "# Entity: Diff",
-                    if diff.staged { " (staged)" } else { "" }
-                )
-            }
+            GitEntity::Commit(commit) => formatdoc! {"
+                # Entity: Commit
+                `commit {hash}` | {author} <{email}> | {date}
+
+                {message}
+                -----",
+                hash = commit.full_hash,
+                author = commit.author_name,
+                email = commit.author_email,
+                date = commit.date,
+                message = commit.message,
+            },
+            GitEntity::Diff(diff) => formatdoc! {"
+                # Entity: Diff{staged}",
+                staged = if diff.staged { " (staged)" } else { "" }
+            },
         }
     }
 }
 
-impl AsRef<GitCommit> for GitEntity {
-    fn as_ref(&self) -> &GitCommit {
+impl AsRef<Commit> for GitEntity {
+    fn as_ref(&self) -> &Commit {
         match self {
             GitEntity::Commit(commit) => commit,
             _ => panic!("Not a Commit"),
@@ -42,8 +43,8 @@ impl AsRef<GitCommit> for GitEntity {
     }
 }
 
-impl AsRef<GitDiff> for GitEntity {
-    fn as_ref(&self) -> &GitDiff {
+impl AsRef<Diff> for GitEntity {
+    fn as_ref(&self) -> &Diff {
         match self {
             GitEntity::Diff(diff) => diff,
             _ => panic!("Not a Diff"),
